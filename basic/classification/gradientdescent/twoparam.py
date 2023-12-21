@@ -7,17 +7,9 @@ POINTS: int = 50 + 1
 WAV_AMPLITUDE: int = 3
 
 
+# Hopefully this helps show the pattern :)
+
 RATIO = 0.8
-
-def ssr(observed, predicted):
-    return ((observed - predicted) ** 2).sum()
-
-def dssr(observed, predicted):
-    # The derivative of the SSR
-    return (-2*(observed - predicted)).sum()
-
-def predict(x, slope, intercept):
-    return x * slope + intercept
 
 
 def generate_split(x_raw, y_raw, seq_len: int, ratio: float) -> tuple:
@@ -27,29 +19,32 @@ def generate_split(x_raw, y_raw, seq_len: int, ratio: float) -> tuple:
 
 # Generate testing data
 x_raw = np.linspace(0, SEQ_LEN, POINTS)
-y_raw = np.sin(x_raw / 4) * WAV_AMPLITUDE + 0.2 * x_raw
+y_raw = np.sqrt((np.sin(x_raw / 4) * WAV_AMPLITUDE) + 0.2 * x_raw) + 1
 
 # Generate splits
 x_train, y_train, x_test, y_test = generate_split(x_raw, y_raw, POINTS, RATIO)
 
-LEARNING_RATE: float = 1e-3
-EPOCHS = 10
+LEARNING_RATE: float = 0.00003
+EPOCHS = 700
 
-slope = 1
+slope = 0.5
 intercept = 0
 for step in range(EPOCHS):
     # Calculate the derivative
-    dssr_val = dssr(y_train, predict(x_train, slope, intercept))
-    
+    x0 = (-2 * (y_train - (intercept + (slope * x_train)))).sum()
+    x1 = (-2 * x_train * (y_train - (intercept + (slope * x_train)))).sum()
+
+
     # Calculate the step size
-    step_size = dssr_val * LEARNING_RATE
+    s0 = x0 * LEARNING_RATE
+    s1 = x1 * LEARNING_RATE
     
-    # Calculate the new slope (update)
-    slope = slope - step_size
-    print(f'({step}) dSSR: {dssr_val:.3f}\tStep: {step_size:+.3f}\tSlope: {slope:.2f}')
+    # Update parameters
+    intercept = intercept - s0
+    slope = slope - s1
 
-
-plt.title('One-Parameter Gradient Descent')
-plt.plot(x_train, y_train, label='Real')
-plt.plot(x_raw, predict(x_raw, slope, intercept), label='Prediction')
+plt.title('Two-Parameter Gradient Descent')
+plt.plot(x_raw, y_raw, label='Real')
+plt.plot(x_raw, x_raw * slope + intercept, label='Prediction')
+plt.legend(loc='upper left')
 plt.show()
