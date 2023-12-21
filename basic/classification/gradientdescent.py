@@ -36,6 +36,8 @@ fit_line = x_raw
 
 prediction = predict(x_test)
 
+print(calculate_r_squared(prediction, y_test))
+
 
 
 plt.plot(x_train, y_train)
