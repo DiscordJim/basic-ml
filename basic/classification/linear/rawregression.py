@@ -47,7 +47,7 @@ x_train, y_train, x_test, y_test = generate_split(x_raw, y_raw, POINTS, RATIO)
 
 
 # Create a degree polynomial and fit it
-poly_2 = create_poly_fit(x_train, y_train, 2)
+poly_2 = create_poly_fit(x_train, y_train, 1)
 predictions = poly_2(x_raw)
 
 # Display the plot
