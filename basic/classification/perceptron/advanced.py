@@ -14,7 +14,7 @@ X = np.array([[1, 0, 0],
 
 Y = np.array([0, 0, 0, 1])
 
-EPOCHS = 200
+EPOCHS = 10000
 LEARNING_RATE = 0.1
 
 # Intialize weights to random
@@ -42,8 +42,11 @@ for e in range(EPOCHS):
         # Calculate activation function over prediction
         y = sigmoid(x @ w)
         
-        # Update the total loss with cross entropy loss
-        total_loss = total_loss + ((y - t) * x)
+        p = 1 if y > 0.5 else 0
+        
+        if p != t:
+            # Update the total loss with cross entropy loss
+            total_loss = total_loss + ((y - t) * x)
     
     # Update 
     w = w - (LEARNING_RATE * (total_loss / N))
