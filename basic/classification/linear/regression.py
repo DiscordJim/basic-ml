@@ -7,6 +7,8 @@ from math import sqrt
 # Good article on linear regression
 # https://realpython.com/linear-regression-in-python/
 # https://data36.com/polynomial-regression-python-scikit-learn/
+# https://pyimagesearch.com/2016/10/17/stochastic-gradient-descent-sgd-with-python/
+
 
 # Constants
 SEQ_LEN: int = 100

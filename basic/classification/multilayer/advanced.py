@@ -1,3 +1,4 @@
+from typing import Any
 import numpy as np
 import matplotlib.pyplot as plt
 from sklearn.linear_model import LinearRegression
@@ -10,26 +11,56 @@ from sklearn.utils import shuffle
 # -https://pyimagesearch.com/2021/05/06/backpropagation-from-scratch-with-python/
 # https://pyimagesearch.com/2016/10/17/stochastic-gradient-descent-sgd-with-python/
 # Helper functions
-def relu(x):
-    return np.maximum(0, x)
-    #return 1 / (1 + np.exp(-x))
 
-def relu_derivative(x):
-    return (x > 0) * 1
+class Activation:
+    
+    def activate(self, x):
+        pass
+    
+    def derivative(self, x):
+        pass
 
-def sigmoid(x):
-    #return np.maximum(0, x)
-    return 1 / (1 + np.exp(-x))
+class ReLU(Activation):
+    
+    def activate(self, x):
+        return np.maximum(0, x)
+    
+    def derivative(self, x):
+        return (x > 0) * 1
 
-def sigmoid_derivative(x):
-    #return (x > 0) * 1
-    return x * (1 - x)
+class Softmax(Activation):
+    
+    def activate(self, x):
+        return 1 / (1 + np.exp(-x))
+    
+    def derivative(self, x):
+        return x * (1 - x)
+    
+class Linear(Activation):
+    
+    def activate(self, x):
+        return x
+    
+    def derivative(self, x):
+        return 1
+    
+class Snake(Activation):
+    
+    def activate(self, x):
+        return x + np.square(np.sin(x))
+    
+    def derivative(self, x):
+        return 2 * np.cos(x) * np.sin(x) + 1
+    
+
+
 
 
 class Network:
     
-    def __init__(self, dimensions, alpha=0.1) -> None:
+    def __init__(self, dimensions, activations, alpha=0.1) -> None:
         self.layers = []
+        self.activations = activations
         self.alpha = alpha
         for i in np.arange(0, len(dimensions) - 2):
             # We add an extra one to account for bias
@@ -54,7 +85,7 @@ class Network:
             
             # Apply the sigmoid activation function to calculate 
             # the output.
-            out = sigmoid(net)
+            out = self.activations[layer].activate(net)#sigmoid(net)
             
             # Record the activation
             A.append(out)
@@ -72,14 +103,14 @@ class Network:
         # Please note! We are moving through the layers backwards,
         # how interesting.
         #print(sigmoid_derivative(A[-1]))
-        D = [ error * sigmoid_derivative(A[-1]) ]
+        D = [ error * self.activations[-1].derivative(A[-1]) ]
         for layer in np.arange(len(A) - 2, 0, -1):
             
             # The delta for the current layer is equal to the delta of the
             # previous layer dotted with the weight matrix of the current layer
             # followed by multiplying the delta by the derivative of the nonlinear activation function
             delta = D[-1].dot(self.layers[layer].T)
-            delta = delta * sigmoid_derivative(A[layer])
+            delta = delta * self.activations[layer].derivative(A[layer])
             D.append(delta)
             
         # Update weights
@@ -96,7 +127,7 @@ class Network:
             p = np.c_[p, np.ones((p.shape[0]))]
         
         for layer in np.arange(0, len(self.layers)):
-            p = sigmoid(np.dot(p, self.layers[layer]))
+            p = self.activations[layer].activate(np.dot(p, self.layers[layer]))
         return p
     
     def calculate_loss(self, X, targets):
@@ -130,8 +161,9 @@ class Network:
 # print(np.max(np.array([[1],[2],[3]])))
 # exit()
 
-POINTS = 80
-SEQ_LEN = 10
+
+POINTS = 100
+SEQ_LEN = 20
 
 
 
@@ -142,17 +174,21 @@ def generate_split(x_raw, y_raw, seq_len: int, ratio: float) -> tuple:
 
 # Generate testing data
 x_raw = np.linspace(0, SEQ_LEN, POINTS).reshape(-1, 1)
-y_raw = (x_raw ** np.sin(x_raw)) / 7.86#(0.5 * (np.sin(x_raw * 10) + 1) + np.sqrt(x_raw))/2.25# This is our transform function
+y_raw = (np.sin(x_raw*2))# This is our transform function
 # print(np.max(y_raw))
 # exit()
 
-EPOCHS = 10000
+EPOCHS = 50000
 
 # Generate splits
-x_train, y_train, x_test, y_test = generate_split(x_raw, y_raw, POINTS, 0.9)
+x_train, y_train, x_test, y_test = generate_split(x_raw, y_raw, POINTS, 0.6)
 #print(x_train)
-net = Network([1, 5, 1], alpha=0.1)
-net.train(x_train, y_train, EPOCHS, step=1)
+net = Network(
+    dimensions=[1, 128, 1],
+    activations=[Linear(), Snake(),Snake(), Linear()],
+    alpha=0.000001
+)
+net.train(x_train, y_train, EPOCHS, batch_size=64, step=100)
 
 
 
